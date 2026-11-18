@@ -64,7 +64,7 @@
     <button class="ib" id="bNew" aria-label="תיקייה חדשה">📁+</button>
   </div>
   <form id="sf" hidden><input id="q" type="search" placeholder="חיפוש לפי שם..." enterkeyhint="search"><button class="ib" type="button" id="bCloseS" aria-label="סגור חיפוש">✕</button></form>
-  <div class="crow"><div id="crumbs"></div><small id="credit">התוכנה פותחה על ידי שלומי אלנקרי · <bdi>V2.11.5</bdi></small></div>
+  <div class="crow"><div id="crumbs"></div><small id="credit">התוכנה פותחה על ידי שלומי אלנקרי · <bdi>V2.11.6</bdi></small></div>
   <div id="share"><div id="shareTx"></div><div class="acts"><button class="btn" id="bShareUp">העלה לכאן</button><button class="btn2" id="bShareNo">ביטול</button></div></div>
 </header>
 <main>
@@ -239,7 +239,7 @@ let moving = null;
 function startMove(f) {
   moving = { ...f, from: (f.parents || [])[0] || cur().id };
   $('shareTx').innerHTML = `<b>מעביר:</b> ${bdi(f.name)}<br>היכנס לתיקייה הרצויה ולחץ "העבר לכאן".`;
-  $('bShareUp').textContent = 'העבר לכאן'; $('share').style.display = 'block'; closeSearch(); show();
+  $('bShareUp').textContent = 'העלה לכאן'; $('share').style.display = 'block'; closeSearch(); show();
 }
 function endMove() { moving = null; $('bShareUp').textContent = 'העלה לכאן'; $('share').style.display = 'none'; if (shared.length) loadShare(); }
 async function moveHere() {

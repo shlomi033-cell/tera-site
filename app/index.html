@@ -216,7 +216,7 @@ $('bNew').onclick = async () => {
 function menu(f) {
   const dir = f.mimeType === FOLDER;
   $('shT').innerHTML = bdi(f.name);
-  const acts = [...(dir ? [['פתח', () => enter(f)]] : [['פתח / הורד', () => openFile(f)], ['שתף...', () => shareOut(f)]]), ['שנה שם', () => rename(f)], ['מחק (לסל של Drive)', () => trash(f), 'red']];
+  const acts = [...(dir ? [['פתח', () => enter(f)]] : [['פתח / הורד', () => openFile(f)], ['שתף...', () => shareOut(f)]]), ['שנה שם', () => rename(f)], ['העבר לתיקייה אחרת', () => startMove(f)], ['מחק (לסל של Drive)', () => trash(f), 'red']];
   $('shB').innerHTML = acts.map((a, i) => `<button data-i="${i}" class="${a[2] || ''}">${a[0]}</button>`).join('') + '<button data-i="x">ביטול</button>';
   $('shB').querySelectorAll('button').forEach((b) => (b.onclick = () => { closeSheet(); if (b.dataset.i !== 'x') acts[b.dataset.i][1](); }));
   $('sheet').style.display = 'flex';
@@ -229,6 +229,22 @@ async function rename(f) {
   if (taken(n, f.id)) return toast('כבר יש כאן פריט בשם הזה');
   try { await j(`${API}/files/${f.id}?fields=id`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: n }) }); show(); }
   catch (e) { toast('שינוי השם נכשל: ' + e.message); }
+}
+// ---- move: pick the item, walk to the target folder, press "העבר לכאן" (reuses the yellow bar of shared files)
+let moving = null;
+function startMove(f) {
+  moving = { ...f, from: (f.parents || [])[0] || cur().id };
+  $('shareTx').innerHTML = `<b>מעביר:</b> ${bdi(f.name)}<br>היכנס לתיקייה הרצויה ולחץ "העבר לכאן".`;
+  $('bShareUp').textContent = 'העבר לכאן'; $('share').style.display = 'block'; closeSearch(); show();
+}
+function endMove() { moving = null; $('bShareUp').textContent = 'העלה לכאן'; $('share').style.display = 'none'; if (shared.length) loadShare(); }
+async function moveHere() {
+  const f = moving, to = cur().id;
+  if (to === f.from) return toast('הפריט כבר בתיקייה הזו');
+  if (stack.some((x) => x.id === f.id)) return toast('אי אפשר להעביר תיקייה לתוך עצמה');
+  if (taken(f.name)) return toast('כבר יש כאן פריט בשם הזה');
+  try { await j(`${API}/files/${f.id}?addParents=${to}&removeParents=${f.from}&fields=id`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: '{}' }); endMove(); toast('הועבר'); show(); }
+  catch (e) { toast('ההעברה נכשלה: ' + e.message); }
 }
 async function trash(f) {
   if (!confirm(`למחוק את "${f.name}"?\nהפריט יעבור לסל של Google Drive (אפשר לשחזר משם), וימחק גם מהמחשב בסנכרון הבא.`)) return;
@@ -277,8 +293,8 @@ async function loadShare() {
   $('share').style.display = 'block';
 }
 async function clearShare() { shared = []; $('share').style.display = 'none'; await caches.delete('tera-share'); }
-$('bShareUp').onclick = async () => { const s = shared; $('share').style.display = 'none'; const ok = await uploadAll(s); if (ok === s.length) clearShare(); else $('share').style.display = 'block'; };
-$('bShareNo').onclick = clearShare;
+$('bShareUp').onclick = async () => { if (moving) return moveHere(); const s = shared; $('share').style.display = 'none'; const ok = await uploadAll(s); if (ok === s.length) clearShare(); else $('share').style.display = 'block'; };
+$('bShareNo').onclick = () => (moving ? endMove() : clearShare());
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>

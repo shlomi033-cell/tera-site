@@ -56,6 +56,7 @@
   <div class="top">
     <img src="icon-192.png" alt="">
     <b>TERA</b>
+    <button class="ib" id="bInstall" aria-label="התקנה" hidden style="font-size:15px;font-weight:700;background:var(--y);color:var(--navy);padding:6px 12px">התקן</button>
     <button class="ib" id="bSearch" aria-label="חיפוש">🔍</button>
     <button class="ib" id="bNew" aria-label="תיקייה חדשה">📁+</button>
   </div>
@@ -295,6 +296,17 @@ async function loadShare() {
 async function clearShare() { shared = []; $('share').style.display = 'none'; await caches.delete('tera-share'); }
 $('bShareUp').onclick = async () => { if (moving) return moveHere(); const s = shared; $('share').style.display = 'none'; const ok = await uploadAll(s); if (ok === s.length) clearShare(); else $('share').style.display = 'block'; };
 $('bShareNo').onclick = () => (moving ? endMove() : clearShare());
+
+// ---- install button: only in the browser, never once TERA runs as an installed app
+const installed = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+let ip = null;
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); ip = e; $('bInstall').hidden = false; }); // Android/Chrome
+addEventListener('appinstalled', () => { ip = null; $('bInstall').hidden = true; });
+if (!installed && /iPhone|iPad|iPod/.test(navigator.userAgent)) $('bInstall').hidden = false; // iPhone has no install prompt: show the steps
+$('bInstall').onclick = async () => {
+  if (ip) { ip.prompt(); await ip.userChoice; ip = null; $('bInstall').hidden = true; return; }
+  alert('התקנה באייפון:\n1. פותחים את הדף ב-Safari\n2. לוחצים על כפתור השיתוף (ריבוע עם חץ למעלה)\n3. בוחרים "הוספה למסך הבית" ואז "הוסף"');
+};
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>

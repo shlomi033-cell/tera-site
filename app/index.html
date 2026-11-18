@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10243e">
+<title>TERA</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TERA">
+<style>
+  :root { --navy:#10243e; --y:#f5b82e; --bg:#f4f6fb; --line:#e5e7eb; --mut:#6b7280; --red:#b91c1c; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,"Segoe UI",Arial,sans-serif; background:var(--bg); color:var(--navy); -webkit-tap-highlight-color:transparent; }
+  header { position:sticky; top:0; z-index:5; background:var(--navy); color:#fff; padding:10px 12px calc(10px) ; padding-top:max(10px,env(safe-area-inset-top)); }
+  .top { display:flex; align-items:center; gap:10px; }
+  .top img { width:32px; height:32px; border-radius:8px; }
+  .top b { font-size:20px; flex:1; }
+  .ib { background:none; border:0; color:inherit; font-size:22px; padding:6px 8px; border-radius:8px; min-width:44px; min-height:44px; }
+  .ib:active { background:rgba(255,255,255,.15); }
+  #crumbs { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; font-size:14px; }
+  #crumbs button { background:rgba(255,255,255,.12); color:#fff; border:0; border-radius:14px; padding:4px 10px; max-width:60vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #crumbs button:last-child { background:var(--y); color:var(--navy); font-weight:600; }
+  form#sf { display:flex; gap:6px; margin-top:8px; }
+  form#sf input { flex:1; border:0; border-radius:10px; padding:10px 12px; font-size:16px; }
+  main { padding:8px 8px 120px; }
+  .row { display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:6px; min-height:56px; }
+  .row .ic { font-size:26px; width:32px; text-align:center; }
+  .row .tx { flex:1; min-width:0; }
+  .row .nm { font-size:16px; overflow-wrap:anywhere; }
+  .row .sub { font-size:12px; color:var(--mut); margin-top:2px; }
+  .row .more { color:var(--navy); }
+  .msg { text-align:center; color:var(--mut); padding:40px 16px; line-height:1.6; }
+  .btn { background:var(--y); color:var(--navy); border:0; border-radius:12px; padding:12px 20px; font-size:17px; font-weight:700; }
+  .btn2 { background:#fff; color:var(--navy); border:1px solid var(--line); border-radius:12px; padding:12px 20px; font-size:16px; }
+  #fab { position:fixed; left:18px; bottom:calc(18px + env(safe-area-inset-bottom)); width:60px; height:60px; border-radius:50%; background:var(--y); color:var(--navy); font-size:34px; border:0; box-shadow:0 4px 14px rgba(0,0,0,.25); z-index:6; }
+  #bar { position:fixed; right:0; left:0; bottom:0; background:var(--navy); color:#fff; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); font-size:14px; display:none; z-index:7; }
+  #bar i { display:block; height:5px; background:var(--y); border-radius:3px; margin-top:6px; width:0; transition:width .2s; }
+  #share { background:var(--y); color:var(--navy); padding:10px 12px; border-radius:12px; margin:8px 0; display:none; }
+  #share .acts { display:flex; gap:8px; margin-top:8px; }
+  .sheet { position:fixed; inset:0; background:rgba(16,36,62,.45); display:none; align-items:flex-end; z-index:9; }
+  .sheet > div { background:#fff; width:100%; border-radius:18px 18px 0 0; padding:12px 12px calc(12px + env(safe-area-inset-bottom)); }
+  .sheet h3 { margin:6px 8px 10px; font-size:16px; overflow-wrap:anywhere; }
+  .sheet button { display:block; width:100%; text-align:right; background:none; border:0; font-size:17px; padding:14px 8px; border-top:1px solid var(--line); color:var(--navy); }
+  .sheet button.red { color:var(--red); }
+  #view { position:fixed; inset:0; background:#000; display:none; z-index:10; align-items:center; justify-content:center; }
+  #view img, #view video { max-width:100%; max-height:100%; }
+  #view .ib { position:absolute; top:max(10px,env(safe-area-inset-top)); left:10px; color:#fff; font-size:28px; }
+  #toast { position:fixed; bottom:90px; right:50%; transform:translateX(50%); background:var(--navy); color:#fff; padding:10px 16px; border-radius:20px; font-size:14px; display:none; z-index:11; max-width:90vw; }
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <img src="icon-192.png" alt="">
+    <b>TERA</b>
+    <button class="ib" id="bSearch" aria-label="חיפוש">🔍</button>
+    <button class="ib" id="bNew" aria-label="תיקייה חדשה">📁+</button>
+  </div>
+  <form id="sf" hidden><input id="q" type="search" placeholder="חיפוש לפי שם..." enterkeyhint="search"><button class="ib" type="button" id="bCloseS" aria-label="סגור חיפוש">✕</button></form>
+  <div id="crumbs"></div>
+</header>
+<main>
+  <div id="share"><div id="shareTx"></div><div class="acts"><button class="btn" id="bShareUp">העלה לכאן</button><button class="btn2" id="bShareNo">ביטול</button></div></div>
+  <div id="list"><div class="msg">טוען...</div></div>
+</main>
+<button id="fab" aria-label="העלאת קבצים" hidden>+</button>
+<input type="file" id="pick" multiple hidden>
+<div id="bar"><span id="barTx"></span><i id="barI"></i></div>
+<div class="sheet" id="sheet"><div><h3 id="shT"></h3><div id="shB"></div></div></div>
+<div id="view"><button class="ib" id="bCloseV" aria-label="סגור">✕</button><div id="viewIn"></div></div>
+<div id="toast"></div>
+<script src="https://accounts.google.com/gsi/client" async onload="gisReady()"></script>
+<script>
+'use strict';
+// TERA for the phone: browses and changes the cloud TERA folder directly (Drive API from the browser, no server).
+const CLIENT_ID = ''; // stage 2: the "Web application" OAuth client ID from the TERA project in Google Cloud Console
+const API = 'https://www.googleapis.com/drive/v3', UP = 'https://www.googleapis.com/upload/drive/v3';
+const FOLDER = 'application/vnd.google-apps.folder', F = 'id,name,mimeType,size,modifiedTime,parents,webViewLink';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => '&#' + c.charCodeAt(0) + ';');
+const bdi = (s) => '<bdi>' + esc(s) + '</bdi>';
+const human = (b) => { b = Number(b || 0); const u = ['B', 'KB', 'MB', 'GB']; let i = 0; while (b >= 1024 && i < 3) { b /= 1024; i++; } return (i ? b.toFixed(1) : b) + ' ' + u[i]; };
+const toast = (t) => { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => (e.style.display = 'none'), 3500); };
+
+// ---- sign-in (Google Identity Services token client). The token lives 1 hour; it is kept so a reload does not ask again.
+let tc = null, waiters = [];
+let tok = (() => { try { const t = JSON.parse(localStorage.tok || 'null'); return t && t.exp > Date.now() + 60000 ? t : null; } catch { return null; } })();
+function gisReady() {
+  if (!CLIENT_ID) return showMsg('חסר מזהה התחברות של Google (שלב 2 בהגדרת TERA).');
+  tc = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: 'https://www.googleapis.com/auth/drive',
+    callback: (r) => { if (r.error) return fail(r.error); tok = { v: r.access_token, exp: Date.now() + r.expires_in * 1000 }; localStorage.tok = JSON.stringify(tok); localStorage.signed = '1'; const w = waiters; waiters = []; w.forEach((x) => x[0](tok.v)); },
+    error_callback: (e) => fail(e.type || 'popup') });
+  start();
+}
+function fail(e) { const w = waiters; waiters = []; w.forEach((x) => x[1](new Error(e))); tok = null; signInScreen(); } // expired and the silent renewal was blocked: one tap signs in again
+function token() {
+  if (tok && tok.exp > Date.now() + 60000) return Promise.resolve(tok.v);
+  return new Promise((res, rej) => { waiters.push([res, rej]); if (waiters.length === 1) tc.requestAccessToken({ prompt: localStorage.signed ? '' : 'consent' }); });
+}
+function signInScreen() {
+  $('list').innerHTML = '<div class="msg">כדי לראות את הקבצים שלך ב-TERA צריך להתחבר לחשבון Google.<br><br><button class="btn" id="bIn">התחברות עם Google</button></div>';
+  $('bIn').onclick = () => { tok = null; token().then(start, () => toast('ההתחברות לא הושלמה')); };
+}
+async function api(url, o = {}, again) {
+  const r = await fetch(url, { ...o, headers: { ...(o.headers || {}), Authorization: 'Bearer ' + (await token()) } });
+  if (r.status === 401 && !again) { tok = null; localStorage.removeItem('tok'); return api(url, o, true); }
+  if (!r.ok) { const t = await r.text().catch(() => ''); const e = new Error(r.status + ' ' + t.slice(0, 200)); e.status = r.status; throw e; }
+  return r;
+}
+const j = async (url, o) => (await api(url, o)).json();
+const qs = (s) => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+// ---- folders
+let rootId = localStorage.root || '', stack = [], items = [];
+async function findRoot() {
+  if (rootId) { try { const f = await j(`${API}/files/${rootId}?fields=id,trashed`); if (!f.trashed) return rootId; } catch {} }
+  const r = await j(`${API}/files?q=${encodeURIComponent(`name='TERA' and 'root' in parents and mimeType='${FOLDER}' and trashed=false`)}&fields=files(id)&orderBy=createdTime&pageSize=1`);
+  if (!r.files[0]) throw new Error('לא נמצאה תיקיית TERA בחשבון הזה. TERA במחשב יוצרת אותה בסנכרון הראשון.');
+  return (localStorage.root = rootId = r.files[0].id);
+}
+async function listIn(id) {
+  const out = []; let pt = '';
+  do {
+    const r = await j(`${API}/files?q=${encodeURIComponent(`'${id}' in parents and trashed=false`)}&fields=nextPageToken,files(${F})&orderBy=folder,name&pageSize=1000${pt ? '&pageToken=' + pt : ''}`);
+    out.push(...r.files); pt = r.nextPageToken;
+  } while (pt);
+  return out.sort((a, b) => (b.mimeType === FOLDER) - (a.mimeType === FOLDER) || a.name.localeCompare(b.name, 'he', { numeric: true }));
+}
+const cur = () => stack[stack.length - 1];
+async function start() {
+  if (!tok) return signInScreen(); // a sign-in popup may only open from a tap
+  try { await findRoot(); } catch (e) { return showMsg(e.message); }
+  if (!stack.length) stack = [{ id: rootId, name: 'TERA' }];
+  $('fab').hidden = false; loadShare(); show();
+}
+async function show() {
+  renderCrumbs(); $('list').innerHTML = '<div class="msg">טוען...</div>';
+  const at = cur().id;
+  try { const r = await listIn(at); if (cur().id !== at) return; items = r; render(items, false); }
+  catch (e) { showMsg('לא ניתן לטעון: ' + e.message); }
+}
+function renderCrumbs() {
+  $('crumbs').innerHTML = stack.map((s, i) => `<button data-i="${i}">${bdi(s.name)}</button>`).join('');
+  $('crumbs').querySelectorAll('button').forEach((b) => (b.onclick = () => { stack.length = Number(b.dataset.i) + 1; show(); }));
+}
+const icon = (f) => f.mimeType === FOLDER ? '📁' : /^image\//.test(f.mimeType) ? '🖼️' : /^video\//.test(f.mimeType) ? '🎬' : /^audio\//.test(f.mimeType) ? '🎵' : /pdf/.test(f.mimeType) ? '📕' : '📄';
+function render(list, search) {
+  if (!list.length) return showMsg(search ? 'לא נמצאו קבצים בשם הזה.' : 'התיקייה ריקה. לחץ על + כדי להעלות קבצים.');
+  $('list').innerHTML = list.map((f, i) => `<div class="row" data-i="${i}"><span class="ic">${icon(f)}</span><div class="tx"><div class="nm">${bdi(f.name)}</div><div class="sub">${f.mimeType === FOLDER ? 'תיקייה' : human(f.size) + ' · ' + new Date(f.modifiedTime).toLocaleDateString('he-IL')}${search && f.where ? ' · בתוך: ' + bdi(f.where) : ''}</div></div><button class="ib more" data-m="${i}" aria-label="פעולות">⋮</button></div>`).join('');
+  $('list').querySelectorAll('.row').forEach((r) => (r.onclick = (ev) => { const f = list[r.dataset.i]; if (ev.target.dataset.m !== undefined) return menu(f); f.mimeType === FOLDER ? enter(f) : openFile(f); }));
+}
+function showMsg(t) { $('list').innerHTML = '<div class="msg">' + esc(t) + '</div>'; }
+async function enter(f) {
+  if (f.path) stack = [{ id: rootId, name: 'TERA' }, ...f.path]; // from a search result
+  stack.push({ id: f.id, name: f.name }); closeSearch(); show();
+}
+
+// ---- search: Drive has no "inside folder X" for My Drive, so search by name and keep only what is under TERA
+const par = new Map(), nm = new Map();
+async function pathTo(id) { // folders from TERA (excluded) down to id, or null when outside TERA
+  const chain = [];
+  for (let i = 0; i < 40 && id; i++) {
+    if (id === rootId) return chain.reverse();
+    if (!par.has(id)) { const f = await j(`${API}/files/${id}?fields=name,parents`); par.set(id, (f.parents || [])[0] || null); nm.set(id, f.name); }
+    chain.push({ id, name: nm.get(id) }); id = par.get(id);
+  }
+  return null;
+}
+async function search(text) {
+  showMsg('מחפש...');
+  try {
+    const r = await j(`${API}/files?q=${encodeURIComponent(`name contains '${qs(text)}' and trashed=false`)}&fields=files(${F})&pageSize=100`);
+    const out = [];
+    for (const f of r.files) { const p = await pathTo((f.parents || [])[0]); if (p) { f.path = p; f.where = ['TERA', ...p.map((x) => x.name)].join(' / '); out.push(f); } }
+    render(out, true);
+  } catch (e) { showMsg('החיפוש נכשל: ' + e.message); }
+}
+function closeSearch() { $('sf').hidden = true; $('q').value = ''; }
+$('bSearch').onclick = () => { $('sf').hidden = false; $('q').focus(); };
+$('bCloseS').onclick = () => { closeSearch(); render(items, false); };
+$('sf').onsubmit = (e) => { e.preventDefault(); const t = $('q').value.trim(); if (t) search(t); };
+
+// ---- open / download / share out
+async function blobOf(f) { setBar('מוריד: ' + f.name, 0); try { return await (await api(`${API}/files/${f.id}?alt=media`)).blob(); } finally { setBar(); } }
+async function openFile(f) {
+  if (f.mimeType.startsWith('application/vnd.google-apps.')) return void window.open(f.webViewLink, '_blank'); // Google Docs: no file content, open in Google
+  try {
+    const b = await blobOf(f), u = URL.createObjectURL(b);
+    if (/^(image|video)\//.test(f.mimeType)) { $('viewIn').innerHTML = f.mimeType.startsWith('image/') ? `<img src="${u}" alt="">` : `<video src="${u}" controls autoplay></video>`; $('view').style.display = 'flex'; }
+    else { const a = document.createElement('a'); a.href = u; a.download = f.name; a.click(); setTimeout(() => URL.revokeObjectURL(u), 60000); }
+  } catch (e) { toast('הפתיחה נכשלה: ' + e.message); }
+}
+$('bCloseV').onclick = () => { $('view').style.display = 'none'; $('viewIn').innerHTML = ''; };
+async function shareOut(f) {
+  try {
+    const file = new File([await blobOf(f)], f.name, { type: f.mimeType });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: f.name });
+    else toast('השיתוף לא נתמך בדפדפן הזה');
+  } catch (e) { if (e.name !== 'AbortError') toast('השיתוף נכשל: ' + e.message); }
+}
+
+// ---- change: new folder, rename, trash. Names stay unique in a folder: TERA on the PC maps the cloud by name
+const taken = (name, exceptId) => items.some((x) => x.name.toLowerCase() === name.toLowerCase() && x.id !== exceptId);
+const uniq = (name) => { if (!taken(name)) return name; const m = /^(.*?)(\.[^.]*)?$/.exec(name); for (let i = 1; ; i++) { const n = `${m[1]} (${i})${m[2] || ''}`; if (!taken(n)) return n; } };
+const badName = (n) => !n || /[\\/:*?"<>|]/.test(n) || /[. ]$/.test(n); // Windows cannot hold these names, so the PC copy would fail
+$('bNew').onclick = async () => {
+  const n = (prompt('שם התיקייה החדשה:') || '').trim(); if (!n) return;
+  if (badName(n)) return toast('שם לא חוקי (בלי \\ / : * ? " < > | ובלי נקודה או רווח בסוף)');
+  if (taken(n)) return toast('כבר יש כאן פריט בשם הזה');
+  try { await j(`${API}/files?fields=id`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: n, mimeType: FOLDER, parents: [cur().id] }) }); show(); }
+  catch (e) { toast('יצירת התיקייה נכשלה: ' + e.message); }
+};
+function menu(f) {
+  const dir = f.mimeType === FOLDER;
+  $('shT').innerHTML = bdi(f.name);
+  const acts = [...(dir ? [['פתח', () => enter(f)]] : [['פתח / הורד', () => openFile(f)], ['שתף...', () => shareOut(f)]]), ['שנה שם', () => rename(f)], ['מחק (לסל של Drive)', () => trash(f), 'red']];
+  $('shB').innerHTML = acts.map((a, i) => `<button data-i="${i}" class="${a[2] || ''}">${a[0]}</button>`).join('') + '<button data-i="x">ביטול</button>';
+  $('shB').querySelectorAll('button').forEach((b) => (b.onclick = () => { closeSheet(); if (b.dataset.i !== 'x') acts[b.dataset.i][1](); }));
+  $('sheet').style.display = 'flex';
+}
+const closeSheet = () => ($('sheet').style.display = 'none');
+$('sheet').onclick = (e) => { if (e.target.id === 'sheet') closeSheet(); };
+async function rename(f) {
+  const n = (prompt('שם חדש:', f.name) || '').trim(); if (!n || n === f.name) return;
+  if (badName(n)) return toast('שם לא חוקי (בלי \\ / : * ? " < > | ובלי נקודה או רווח בסוף)');
+  if (taken(n, f.id)) return toast('כבר יש כאן פריט בשם הזה');
+  try { await j(`${API}/files/${f.id}?fields=id`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: n }) }); show(); }
+  catch (e) { toast('שינוי השם נכשל: ' + e.message); }
+}
+async function trash(f) {
+  if (!confirm(`למחוק את "${f.name}"?\nהפריט יעבור לסל של Google Drive (אפשר לשחזר משם), וימחק גם מהמחשב בסנכרון הבא.`)) return;
+  try { await j(`${API}/files/${f.id}?fields=id`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trashed: true }) }); show(); }
+  catch (e) { toast('המחיקה נכשלה: ' + e.message); }
+}
+
+// ---- upload (resumable, one PUT per file with progress)
+function setBar(t, pct) { $('bar').style.display = t ? 'block' : 'none'; $('barTx').textContent = t || ''; $('barI').style.width = (pct || 0) + '%'; }
+async function uploadOne(file, parentId, name, onp) {
+  const init = await api(`${UP}/files?uploadType=resumable&fields=id`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Upload-Content-Type': file.type || 'application/octet-stream', 'X-Upload-Content-Length': String(file.size) },
+    body: JSON.stringify({ name, parents: [parentId], modifiedTime: new Date(file.lastModified || Date.now()).toISOString() }) });
+  const loc = init.headers.get('location');
+  await new Promise((res, rej) => {
+    const x = new XMLHttpRequest(); x.open('PUT', loc);
+    x.upload.onprogress = (e) => e.lengthComputable && onp(e.loaded / e.total);
+    x.onload = () => (x.status < 300 ? res() : rej(new Error(x.status + ' ' + x.responseText.slice(0, 200))));
+    x.onerror = () => rej(new Error('תקלת רשת')); x.send(file);
+  });
+}
+async function uploadAll(files) {
+  files = [...files]; if (!files.length) return 0;
+  const at = cur().id; let ok = 0;
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i], name = uniq(f.name); items.push({ name, id: '' }); // later files in this batch see the name as taken
+    const tx = `מעלה ${i + 1} מתוך ${files.length}: `;
+    try { await uploadOne(f, at, name, (p) => setBar(tx + name + ` (${Math.round(p * 100)}%)`, Math.round(((i + p) / files.length) * 100))); ok++; }
+    catch (e) { toast(`"${f.name}" לא עלה: ${e.message}`); }
+  }
+  setBar(); toast(`הועלו ${ok} מתוך ${files.length}`); if (cur().id === at) show();
+  return ok;
+}
+$('fab').onclick = () => $('pick').click();
+$('pick').onchange = async () => { await uploadAll($('pick').files); $('pick').value = ''; };
+
+// ---- files shared from another app (sw.js keeps them until the user picks a folder)
+let shared = [];
+async function loadShare() {
+  if (!('caches' in window)) return;
+  const c = await caches.open('tera-share'), keys = await c.keys();
+  shared = await Promise.all(keys.map(async (k) => { const r = await c.match(k); return new File([await r.blob()], decodeURIComponent(r.headers.get('x-name') || 'file'), { type: r.headers.get('content-type') || '', lastModified: Number(r.headers.get('x-mtime')) || Date.now() }); }));
+  history.replaceState(null, '', location.pathname);
+  if (!shared.length) return;
+  $('shareTx').innerHTML = `<b>${shared.length === 1 ? 'קובץ אחד ממתין' : shared.length + ' קבצים ממתינים'} להעלאה:</b> ${shared.slice(0, 3).map((f) => bdi(f.name)).join(', ')}${shared.length > 3 ? '...' : ''}<br>היכנס לתיקייה הרצויה ולחץ "העלה לכאן".`;
+  $('share').style.display = 'block';
+}
+async function clearShare() { shared = []; $('share').style.display = 'none'; await caches.delete('tera-share'); }
+$('bShareUp').onclick = async () => { const s = shared; $('share').style.display = 'none'; const ok = await uploadAll(s); if (ok === s.length) clearShare(); else $('share').style.display = 'block'; };
+$('bShareNo').onclick = clearShare;
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
